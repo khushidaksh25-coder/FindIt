@@ -1,7 +1,10 @@
+
 import { TOKEN_KEY } from './authConfig'
 
+const configuredApiUrl = import.meta.env.VITE_API_URL?.trim()
+
 export const API_BASE_URL = (
-  import.meta.env.VITE_API_URL || 'http://localhost:4000/api'
+  configuredApiUrl || 'https://findit-backend-momd.onrender.com/api'
 ).replace(/\/+$/, '')
 
 export const apiRequest = async (path, { auth = false, ...options } = {}) => {
@@ -13,7 +16,10 @@ export const apiRequest = async (path, { auth = false, ...options } = {}) => {
   }
 
   if (auth) {
-    if (!token) throw new Error('Please log in to continue.')
+    if (!token) {
+      throw new Error('Please log in to continue.')
+    }
+
     headers.set('Authorization', `Bearer ${token}`)
   }
 
@@ -23,16 +29,20 @@ export const apiRequest = async (path, { auth = false, ...options } = {}) => {
   })
 
   let result
+
   try {
     result = await response.json()
   } catch {
     throw new Error(`The server returned an invalid response (${response.status}).`)
   }
 
-  if (auth && (
-    response.status === 401 ||
-    (path === '/users/profile' && response.status === 404)
-  )) {
+  if (
+    auth &&
+    (
+      response.status === 401 ||
+      (path === '/users/profile' && response.status === 404)
+    )
+  ) {
     window.dispatchEvent(new Event('findit:unauthorized'))
   }
 
